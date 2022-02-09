@@ -67,7 +67,7 @@ B:
 }
 ```
 
-显而易见，我们可以利用goto语句来实现跳转的过程，但是这个编写的过程我们可以加宏以优化
+显而易见，我们可以利用`goto`语句来实现跳转的过程，期间我们把代码封装成代码块（code block），但是这个编写的过程我们可以加宏以优化
 
 coroutine.h：
 
@@ -76,7 +76,8 @@ coroutine.h：
 #define __COROUTINE__H__
 
 #define DEFCODE(__name__,__expression__,...) if(0){__name__:if(__expression__){__VA_ARGS__}};
-#define CONTROL(__CONTROL_code_name__) goto __CONTROL_code_name__;
+#define CONTROL(codes...) __CONTROL__: codes;
+#define EXECUTE(codes) goto codes;
 
 #endif  //!__COROUTINE__H__
 ```
@@ -86,6 +87,7 @@ coroutine.h：
 ```c
 #include <stdio.h>
 
+#define Debug
 #include "coroutine.h"
 
 int main(int argc, char const *argv[])
@@ -93,34 +95,49 @@ int main(int argc, char const *argv[])
 
     int i = 0;
     /*control with coroutine*/
-    DEFCODE(C, 1, {
-        if (i > 0){
+    CONTROL({
+        if (i > 0)
+        {
             goto B;
         }
-        if (1){
+        if (1)
+        {
             goto A;
         }
-    })
+    });
     /*create the codes with close spare*/
     DEFCODE(A, 1, {
         while (i < 100)
         {
             i += 1;
-            printf("%d\n",i);
-            goto C;
+            printf("%d\n", i);
+            goto __CONTROL__;
         }
     });
-    DEFCODE(B, 1, {while (i != 0 && i > 0)
+    DEFCODE(B, 1, {
+        while (i != 0 && i > 0)
         {
             i -= 1;
             printf("%d\n",i);
-            goto C;
-        } })
-    CONTROL(C);
-
+            goto __CONTROL__;
+        }
+    });
+    /*a example with test code block*/
+    DEFCODE(test, 1, {
+        printf("test.\n");
+    })
+    EXECUTE(test);
     return 0;
 }
+
 ```
 
-显然大大提高了效率。而且加入了CONTROL()控制函数，可以在这里添加用于控制的代码块。
+显然大大提高了效率。而且加入了`CONTROL()`控制函数，可以在这里添加用于控制的代码块。
 
+跳转至  `__CONTROL__`代码块就是控制函数所在；
+
+这种方式可以显示地避免杂七杂八的函数命名方式，实现了复用和优化。
+
+> *在一个函数中，有且只有一个 `__CONTROL__`多了会打架，不过可以安排*。
+
+可以利用`EXECUTE()`函数来调用定义的代码块。
