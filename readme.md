@@ -75,9 +75,11 @@ coroutine.h：
 #ifndef __COROUTINE__H__
 #define __COROUTINE__H__
 
-#define DEFCODE(__name__,__expression__,...) if(0){__name__:if(__expression__){__VA_ARGS__}};
+#define DEFCODE(__name__,__expression__,codes...) if(0){__name__:if(__expression__){codes}};
 #define CONTROL(codes...) __CONTROL__: codes;
-#define EXECUTE(codes) goto codes;
+
+#define function(func_name,end_goto,__expression__,codes...) if(0){func_name:if(__expression__){codes}goto end_goto;};
+#define used(func_name,end_goto) goto func_name;end_goto:
 
 #endif  //!__COROUTINE__H__
 ```
@@ -123,10 +125,12 @@ int main(int argc, char const *argv[])
         }
     });
     /*a example with test code block*/
-    DEFCODE(test, 1, {
+    function(test,test_end, 1, {
         printf("test.\n");
     })
-    EXECUTE(test);
+    
+    used(test,test_end);
+
     return 0;
 }
 
@@ -140,4 +144,4 @@ int main(int argc, char const *argv[])
 
 > *在一个函数中，有且只有一个 `__CONTROL__`多了会打架，不过可以安排*。
 
-可以利用`EXECUTE()`函数来调用定义的代码块。
+可以利用`function()`函数来定义一个可以带有返回的代码块，并用`used()`来调用

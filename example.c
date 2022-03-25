@@ -36,9 +36,11 @@ int main(int argc, char const *argv[])
         }
     });
     /*a example with test code block*/
-    DEFCODE(test, 1, {
+    function(test,test_end, 1, {
         printf("test.\n");
     })
-    EXECUTE(test);
+    
+    used(test,test_end);
+
     return 0;
 }
